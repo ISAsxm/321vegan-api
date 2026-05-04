@@ -13,6 +13,7 @@ from app.models.product import Product
 from app.models.error_report import ErrorReport
 from app.models.scan_event import ScanEvent
 from app.schemas.user import UserCreate, UserOutPaginated, UserOut, UserUpdate, UserFilters, UserUpdateOwn, UserPatch
+from typing import Literal
 from app.security import get_password_hash
 
 log = get_logger(__name__)
@@ -88,6 +89,18 @@ def fetch_paginated_users(
         "size": size,
         "pages": pages
     }
+
+
+@router.get(
+    "/leaderboard", response_model=List[Optional[UserOut]], status_code=status.HTTP_200_OK,
+    dependencies=[Depends(RoleChecker(["contributor", "admin"]))]
+)
+def fetch_leaderboard(
+    sortby: Literal["nb_products_modified", "nb_checkings"] = "nb_products_modified",
+    limit: int = 20,
+    db: Session = Depends(get_db),
+):
+    return user_crud.get_leaderboard(db, sortby=sortby, limit=limit)
 
 
 @router.get("/{id}", response_model=UserOut, status_code=status.HTTP_200_OK, dependencies=[Depends(RoleChecker(["admin"]))])

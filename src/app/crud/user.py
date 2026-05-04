@@ -1,10 +1,12 @@
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime, timedelta
 
+from sqlalchemy import func, desc
 from sqlalchemy.orm import Session
 
 from app.crud.base import CRUDRepository
 from app.models.user import User, UserRole
+from app.models.checking import Checking
 from app.security import verify_password, get_password_hash, generate_reset_token
 from app.config import settings
 
@@ -162,6 +164,23 @@ class UserCRUDRepository(CRUDRepository):
         db.refresh(user)
         
         return user
+
+    def get_leaderboard(self, db: Session, sortby: str = "nb_products_modified", limit: int = 20) -> List[User]:
+        checking_count = (
+            db.query(Checking.user_id, func.count(Checking.id).label("nb_checkings_count"))
+            .group_by(Checking.user_id)
+            .subquery()
+        )
+        query = (
+            db.query(User)
+            .outerjoin(checking_count, User.id == checking_count.c.user_id)
+            .filter(User.is_active == True)
+        )
+        if sortby == "nb_checkings":
+            query = query.order_by(desc(func.coalesce(checking_count.c.nb_checkings_count, 0)))
+        else:
+            query = query.order_by(desc(User.nb_products_modified))
+        return query.limit(limit).all()
 
     def increment_products_sent(self, db: Session, user_id: int):
         """
