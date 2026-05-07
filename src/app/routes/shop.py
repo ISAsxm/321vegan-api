@@ -38,6 +38,10 @@ def fetch_all_shops(db: Session = Depends(get_db)) -> List[Optional[ShopOut]]:
 def fetch_paginated_shops(
     filter_params: ShopFilters = Depends(),
     ean__in: Optional[List[str]] = Query(default=None),
+    min_lat: Optional[float] = Query(default=None, ge=-90, le=90),
+    max_lat: Optional[float] = Query(default=None, ge=-90, le=90),
+    min_lng: Optional[float] = Query(default=None, ge=-180, le=180),
+    max_lng: Optional[float] = Query(default=None, ge=-180, le=180),
     db: Session = Depends(get_db),
     pagination_params: Tuple[int, int] = Depends(get_pagination_params),
     orderby_params: Tuple[str, bool] = Depends(get_sort_by_params),
@@ -48,6 +52,7 @@ def fetch_paginated_shops(
     Parameters:
         filter_params (ShopFilters): Filter parameters (name, city, country, shop_type).
         ean__in (List[str]): EAN codes to filter by. Supports repeated params or comma-separated values.
+        min_lat/max_lat/min_lng/max_lng (float): Bounding box to restrict results geographically.
         db (Session): The database session.
         pagination_params (Tuple[int, int]): The pagination parameters (skip, limit).
         orderby_params (Tuple[str, bool]): The order by parameters (sortby, descending).
@@ -63,6 +68,14 @@ def fetch_paginated_shops(
         for e in ean__in:
             eans.extend(x.strip() for x in e.split(',') if x.strip())
         filters['ean__in'] = eans
+    if min_lat is not None:
+        filters['latitude__ge'] = min_lat
+    if max_lat is not None:
+        filters['latitude__le'] = max_lat
+    if min_lng is not None:
+        filters['longitude__ge'] = min_lng
+    if max_lng is not None:
+        filters['longitude__le'] = max_lng
     shops, total = shop_crud.get_many(
         db,
         skip=page,
