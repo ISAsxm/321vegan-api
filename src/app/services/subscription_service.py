@@ -45,7 +45,7 @@ class SubscriptionService:
         if result:
             return result
 
-        log.error(f"Apple transaction verification failed for both environments")
+        log.error(f"Apple transaction verification failed for both environments: transaction_id={transaction_id}")
         return None
 
     def _try_apple_verification(self, transaction_id: str, environment) -> Optional[dict]:
@@ -290,6 +290,10 @@ class SubscriptionService:
             return None
 
         if not verified:
+            log.error(
+                f"Verification failed for user_id={user_id}, platform={platform}, "
+                f"transaction_id={transaction_id}, purchase_token={purchase_token}"
+            )
             return None
 
         original_tx_id = verified["original_transaction_id"]
@@ -328,6 +332,10 @@ class SubscriptionService:
         # Grant permanent supporter badge
         subscription_crud.grant_supporter_badge(db, user_id)
 
+        log.info(
+            f"Verification succeeded for user_id={user_id}, subscription_id={subscription.id}, "
+            f"platform={platform}, status={subscription.status}, expires_at={subscription.expires_at}"
+        )
         return subscription
 
     # ──────────────────────────────────────────────
