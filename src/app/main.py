@@ -80,11 +80,12 @@ async def flatten_query_string_lists(request: Request, call_next):
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    body = {k: "***" if k == "password" else v for k, v in exc.body.items()} if isinstance(exc.body, dict) else exc.body
     log.error(f"Validation error: {exc.errors()}")
-    log.error(f"Request body: {exc.body}")
+    log.error(f"Request body: {body}")
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content={"detail": exc.errors(), "body": exc.body},
+        content={"detail": exc.errors(), "body": body},
     )
 
 app.include_router(auth_router, prefix="/auth", tags=["authentication"])
