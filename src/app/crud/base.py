@@ -104,20 +104,25 @@ class CRUDRepository:
             min_similarity
         )
 
+        # Levenshtein distance
         lev_dist = func.levenshtein(
             func.lower(func.trim(model_attribute)),
             normalized_value
         )
+
+        # Compute similarity = 1 - (distance / max_length)
         max_len = func.greatest(
             func.length(func.lower(func.trim(model_attribute))),
             len(normalized_value)
         )
         similarity = 1 - (lev_dist.cast(Float) / max_len.cast(Float))
 
+        # Query with similarity calculation
         result = db.query(self._model, similarity.label("similarity"))\
             .order_by(similarity.desc())\
             .first()
 
+        # Only return if similarity passes threshold
         if result and result.similarity >= min_similarity:
             return result[0]
         return None
