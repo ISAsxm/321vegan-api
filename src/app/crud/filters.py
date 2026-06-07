@@ -1,6 +1,6 @@
 from typing import Type, TypeVar, Tuple, Dict
 from sqlalchemy.sql import operators, any_
-from sqlalchemy import extract, func
+from sqlalchemy import extract, func, or_
 from sqlalchemy.orm import Query, RelationshipProperty, aliased
 
 ORMModel = TypeVar("ORMModel")
@@ -30,9 +30,10 @@ OPERATOR_MAPPING = {
     'endswith': operators.endswith_op,
     'iendswith': lambda c, v: c.ilike('%' + v),
     'contains': lambda c, v: c.ilike('%{v}%'.format(v=v)),
-    'lookalike': lambda c, v: func.levenshtein(
-        func.lower(func.trim(c)),
-        func.lower(func.trim(v))) <= 1,
+    'lookalike': lambda c, v: or_(
+        func.lower(func.trim(c)).like('%' + v.strip().lower() + '%'),
+        func.levenshtein(func.lower(func.trim(c)), v.strip().lower()) <= 2,
+    ),
 
     'year': lambda c, v: extract('year', c) == v,
     'year_ne': lambda c, v: extract('year', c) != v,

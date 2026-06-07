@@ -1,6 +1,6 @@
 from typing import Annotated, List, Optional, Tuple
 
-from fastapi import APIRouter, Body, Depends, HTTPException, status, File, UploadFile
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, status, File, UploadFile
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -70,6 +70,26 @@ def fetch_paginated_brands(
         descending=descending,
         **filter_params.model_dump(exclude_none=True)
     )
+    pages = (total + size - 1) // size
+    return {
+        "items": brands,
+        "total": total,
+        "page": page,
+        "size": size,
+        "pages": pages
+    }
+
+
+@router.get(
+    "/search/ranked", response_model=Optional[BrandOutPaginated], status_code=status.HTTP_200_OK
+)
+def fetch_ranked_brands(
+    db: Session = Depends(get_db),
+    pagination_params: Tuple[int, int] = Depends(get_pagination_params),
+    name: str = Query(..., min_length=1),
+) -> Optional[BrandOutPaginated]:
+    page, size = pagination_params
+    brands, total = brand_crud.get_many_ranked(db, 'name', name, skip=page, limit=size)
     pages = (total + size - 1) // size
     return {
         "items": brands,
@@ -182,6 +202,13 @@ def create_brand(
         HTTPException: If there is an error creating
             the brand in the database.
     """
+    existing = brand_crud.get_one(db, Brand.name.ilike(brand_create.name.strip()))
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Brand with name {existing.name} already exists",
+        )
+
     try:
         brand = brand_crud.create(
             db, brand_create

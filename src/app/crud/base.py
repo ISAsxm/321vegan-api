@@ -5,7 +5,7 @@ This module contains the base interface for CRUD
 from typing import List, Optional, Type, TypeVar, Tuple
 
 from pydantic import BaseModel
-from sqlalchemy import Float, desc, asc, func
+from sqlalchemy import Float, desc, asc, func, case, or_
 from sqlalchemy.orm import Session, RelationshipProperty, aliased
 from app.models import Base
 from app.security import get_password_hash
@@ -76,7 +76,7 @@ class CRUDRepository:
         self,
         db: Session,
         filter_param: FilterSchemaType,
-        min_similarity: float = 0.6  # minimum similarity (60%)
+        min_similarity: float = 0.75
     ) -> Optional[ORMModel]:
         """
         Retrieves one record based on normalized Levenshtein similarity.
@@ -203,6 +203,63 @@ class CRUDRepository:
             items,
             total
         )
+
+    def get_many_ranked(
+        self,
+        db: Session,
+        search_field: str,
+        search_term: str,
+        skip: int = 0,
+        limit: int = 100,
+        **extra_filters,
+    ) -> Tuple[List[ORMModel], int]:
+        """
+        Retrieves multiple records ranked by name relevance: exact > prefix > contains > fuzzy.
+
+        Parameters:
+            db (Session): The database session.
+            search_field (str): The model field to search on.
+            search_term (str): The search string typed by the user.
+            skip (int): Number of records to skip.
+            limit (int): Maximum number of records to retrieve.
+            **extra_filters: Additional filters forwarded to buildQueryFilters.
+
+        Returns:
+            Tuple[List[ORMModel], int]: Ranked records and total count.
+        """
+        col = getattr(self._model, search_field)
+        term = search_term.strip().lower()
+        col_lower = func.lower(func.trim(col))
+
+        exact = col_lower == term
+        prefix = col_lower.like(term + '%')
+        contains = col_lower.like('%' + term + '%')
+
+        lev_dist = func.levenshtein(col_lower, term)
+        max_len = func.greatest(func.length(col_lower), len(term))
+        fuzzy_score = 1 - (lev_dist.cast(Float) / max_len.cast(Float))
+
+        rank = case(
+            (exact, 1),
+            (prefix, 2),
+            (contains, 3),
+            else_=4,
+        )
+
+        query = db.query(self._model).filter(
+            or_(exact, prefix, contains, fuzzy_score >= 0.4)
+        )
+        query = buildQueryFilters(self._model, query, extra_filters)
+
+        total = query.count()
+        items = (
+            query
+            .order_by(rank, col)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+        return items, total
 
     def create(self, db: Session, obj_create: CreateSchemaType) -> ORMModel:
         """
