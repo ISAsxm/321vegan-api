@@ -23,7 +23,17 @@ class UserCRUDRepository(CRUDRepository):
         Returns:
             Optional[User]: The user found by email, or None if not found.
         """
-        return self.get_one(db, self._model.email == email)
+        results = (
+            db.query(self._model)
+            .filter(
+                func.lower(self._model.email) == email.lower(),
+                self._model.is_active == True,
+            )
+            .all()
+        )
+        if len(results) > 1:
+            return None
+        return results[0] if results else None
 
     @staticmethod
     def is_super_user(user: User) -> bool:
