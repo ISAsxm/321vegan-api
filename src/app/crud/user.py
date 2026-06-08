@@ -1,6 +1,7 @@
 from typing import Optional, List
 from datetime import datetime, timedelta
 
+import sentry_sdk
 from sqlalchemy import func, desc
 from sqlalchemy.orm import Session
 
@@ -32,6 +33,10 @@ class UserCRUDRepository(CRUDRepository):
             .all()
         )
         if len(results) > 1:
+            sentry_sdk.capture_message(
+                f"Multiple active accounts found for email {email.lower()}",
+                level="error",
+            )
             return None
         return results[0] if results else None
 
