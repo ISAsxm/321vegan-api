@@ -76,4 +76,7 @@ def downgrade() -> None:
                   table_name='subscriptions')
     op.drop_index(op.f('ix_subscriptions_id'), table_name='subscriptions')
     op.drop_table('subscriptions')
+    op.execute("DROP TYPE IF EXISTS subscriptioneventtype")
+    op.execute("DROP TYPE IF EXISTS subscriptionstatus")
+    op.execute("DROP TYPE IF EXISTS subscriptionplatform")
     # ### end Alembic commands ###

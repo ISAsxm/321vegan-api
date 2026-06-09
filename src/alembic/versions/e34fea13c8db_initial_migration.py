@@ -53,3 +53,5 @@ def downgrade() -> None:
     op.drop_table('products')
     op.drop_index(op.f('ix_brands_id'), table_name='brands')
     op.drop_table('brands')
+    op.execute("DROP TYPE IF EXISTS productstate")
+    op.execute("DROP TYPE IF EXISTS productstatus")
