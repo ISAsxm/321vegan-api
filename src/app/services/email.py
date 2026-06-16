@@ -168,6 +168,167 @@ class EmailService:
         """
         
         return self.send_email([email], subject, html_content, text_content)
+    
+    def send_email_change_confirmation(self, email: str, token: str, user_nickname: str) -> bool:
+        """
+        Send an email change confirmation email to the new email address.
+        
+        Parameters:
+            email (str): The new email address to send confirmation to
+            token (str): Email change token
+            user_nickname (str): User's nickname
+            
+        Returns:
+            bool: True if email was sent successfully, False otherwise
+        """
+        subject = "Confirmation de changement d'adresse e-mail 321 Vegan"
+        
+        frontend_url = settings.FRONTEND_URL
+        confirm_url = f"{frontend_url}/confirm-email-change?token={token}"
+        
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Confirmation de changement d'adresse e-mail</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px;">
+                <h1 style="color: #2c5530; text-align: center; margin-bottom: 30px;">
+                    🌱 321Vegan
+                </h1>
+                
+                <h2 style="color: #333; margin-bottom: 20px;">
+                    Bonjour {user_nickname},
+                </h2>
+                
+                <p style="margin-bottom: 20px;">
+                    Nous avons reçu une demande de changement de votre adresse e-mail pour votre compte sur 321Vegan.
+                    Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet e-mail.
+                </p>
+                
+                <p style="margin-bottom: 30px;">
+                    Pour confirmer votre nouvelle adresse e-mail, cliquez sur le bouton ci-dessous :
+                </p>
+                
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="{confirm_url}" 
+                       style="background-color: #2c5530; color: white; padding: 15px 30px; 
+                              text-decoration: none; border-radius: 5px; display: inline-block;
+                              font-weight: bold;">
+                        Confirmer mon adresse e-mail
+                    </a>
+                </div>
+                
+                <p style="margin-bottom: 20px; font-size: 14px; color: #666;">
+                    Si le bouton ci-dessus ne fonctionne pas, copiez et collez le lien suivant dans votre navigateur :
+                </p>
+                
+                <p style="margin-bottom: 30px; word-break: break-all; font-size: 14px; color: #666;">
+                    {confirm_url}
+                </p>
+                
+                <p style="margin-bottom: 10px; font-size: 14px; color: #666;">
+                    Ce lien de confirmation expirera dans 24 heures pour des raisons de sécurité.
+                </p>
+                
+                <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+                
+                <p style="font-size: 12px; color: #999; text-align: center;">
+                    Cet e-mail a été envoyé par 321 Vegan. Si vous avez des questions, n'hésitez pas à nous contacter !
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        text_content = f"""
+        Bonjour {user_nickname},
+ 
+        Nous avons reçu une demande de changement de votre adresse e-mail pour votre compte sur 321Vegan.
+        Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet e-mail.
+ 
+        Pour confirmer votre nouvelle adresse e-mail, veuillez visiter le lien suivant :
+        {confirm_url}
+ 
+        Ce lien de confirmation expirera dans 24 heures pour des raisons de sécurité.
+ 
+        A bientôt !
+        L'équipe de 321Vegan
+        """
+        
+        return self.send_email([email], subject, html_content, text_content)
+ 
+    def send_email_change_notification(self, old_email: str, new_email: str, user_nickname: str) -> bool:
+        """
+        Send a notification to the old email address that the email has been changed.
+        
+        Parameters:
+            old_email (str): The old email address
+            new_email (str): The new email address
+            user_nickname (str): User's nickname
+            
+        Returns:
+            bool: True if email was sent successfully, False otherwise
+        """
+        subject = "Votre adresse e-mail a été modifiée - 321 Vegan"
+        
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Adresse e-mail modifiée</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px;">
+                <h1 style="color: #2c5530; text-align: center; margin-bottom: 30px;">
+                    🌱 321Vegan
+                </h1>
+                
+                <h2 style="color: #333; margin-bottom: 20px;">
+                    Bonjour {user_nickname},
+                </h2>
+                
+                <p style="margin-bottom: 20px;">
+                    Nous vous informons que l'adresse e-mail associée à votre compte 321Vegan a été modifiée avec succès.
+                </p>
+                
+                <p style="margin-bottom: 20px;">
+                    Votre nouvelle adresse e-mail est : <strong>{new_email}</strong>
+                </p>
+                
+                <p style="margin-bottom: 20px;">
+                    Si vous n'êtes pas à l'origine de ce changement, veuillez nous contacter immédiatement.
+                </p>
+                
+                <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+                
+                <p style="font-size: 12px; color: #999; text-align: center;">
+                    Cet e-mail a été envoyé par 321 Vegan. Si vous avez des questions, n'hésitez pas à nous contacter !
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        text_content = f"""
+        Bonjour {user_nickname},
+ 
+        Nous vous informons que l'adresse e-mail associée à votre compte 321Vegan a été modifiée avec succès.
+ 
+        Votre nouvelle adresse e-mail est : {new_email}
+ 
+        Si vous n'êtes pas à l'origine de ce changement, veuillez nous contacter immédiatement.
+ 
+        A bientôt !
+        L'équipe de 321Vegan
+        """
+        
+        return self.send_email([old_email], subject, html_content, text_content)
 
 
 # Create a singleton instance
