@@ -229,7 +229,7 @@ class UserCRUDRepository(CRUDRepository):
         user.email = user.pending_email
         user.pending_email = None
         user.email_change_token = None
-        user.email_change_expires = None
+        user.email_change_expires = Nonegi
  
         db.add(user)
         db.commit()
