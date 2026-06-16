@@ -179,6 +179,63 @@ class UserCRUDRepository(CRUDRepository):
         db.refresh(user)
         
         return user
+    
+    def request_email_change(self, db: Session, user: User, new_email: str) -> Optional[str]:
+        """
+        Request an email change for a user.
+ 
+        Parameters:
+            db (Session): The database session object.
+            user (User): The user requesting the change.
+            new_email (str): The new email address.
+ 
+        Returns:
+            Optional[str]: The email change token if successful, None if email is taken.
+        """
+        existing_user = self.get_user_by_email(db, new_email)
+        if existing_user:
+            return None
+ 
+        token = generate_reset_token()
+ 
+        user.pending_email = new_email
+        user.email_change_token = token
+        user.email_change_expires = datetime.utcnow() + timedelta(hours=settings.RESET_TOKEN_EXPIRE_HOURS)
+ 
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+ 
+        return token
+ 
+    def confirm_email_change(self, db: Session, token: str) -> Optional[User]:
+        """
+        Confirm an email change using a token.
+ 
+        Parameters:
+            db (Session): The database session object.
+            token (str): The email change token.
+ 
+        Returns:
+            Optional[User]: The user if email was changed successfully, None otherwise.
+        """
+        user = self.get_one(db, User.email_change_token == token)
+        if not user:
+            return None
+ 
+        if not user.email_change_expires or user.email_change_expires < datetime.now():
+            return None
+ 
+        user.email = user.pending_email
+        user.pending_email = None
+        user.email_change_token = None
+        user.email_change_expires = None
+ 
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+ 
+        return user
 
     def get_leaderboard(self, db: Session, sortby: str = "nb_products_modified", limit: int = 20) -> List[User]:
         checking_count = (
