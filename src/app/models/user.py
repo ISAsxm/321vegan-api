@@ -31,6 +31,9 @@ class User(Base):
     subscription_bypass = Column(Boolean, default=False, nullable=False)
     reset_token = Column(String, nullable=True)
     reset_token_expires = Column(DateTime, nullable=True)
+    pending_email = Column(String, nullable=True)
+    email_change_token = Column(String, nullable=True)
+    email_change_expires = Column(DateTime, nullable=True)
     checkings = relationship("Checking",
                              back_populates="user",
                              cascade="all, delete",

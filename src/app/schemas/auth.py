@@ -39,3 +39,10 @@ class PasswordResetTokenVerify(BaseModel):
     """Schema for password reset token verification"""
     
     token: str
+
+class EmailChangeRequest(BaseModel):
+    """Schema for requesting an email change"""
+
+    new_email: EmailStr
+    current_password: str
+
