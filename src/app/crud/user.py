@@ -208,7 +208,7 @@ class UserCRUDRepository(CRUDRepository):
  
         return token
  
-    def confirm_email_change(self, db: Session, token: str) -> Optional[User]:
+    def confirm_email_change(self, db: Session, token: str) -> tuple[Optional[User], Optional[str]]:
         """
         Confirm an email change using a token.
  
@@ -217,15 +217,16 @@ class UserCRUDRepository(CRUDRepository):
             token (str): The email change token.
  
         Returns:
-            Optional[User]: The user if email was changed successfully, None otherwise.
+            tuple[Optional[User], Optional[str]]: The user and old email if successful, (None, None) otherwise.
         """
         user = self.get_one(db, User.email_change_token == token)
         if not user:
-            return None
+            return None, None
  
         if not user.email_change_expires or user.email_change_expires < datetime.now():
-            return None
- 
+            return None, None
+
+        old_email = user.email
         user.email = user.pending_email
         user.pending_email = None
         user.email_change_token = None
@@ -235,7 +236,7 @@ class UserCRUDRepository(CRUDRepository):
         db.commit()
         db.refresh(user)
  
-        return user
+        return user, old_email
 
     def get_leaderboard(self, db: Session, sortby: str = "nb_products_modified", limit: int = 20) -> List[User]:
         checking_count = (

@@ -175,12 +175,8 @@ def confirm_email_change(
     Raises:
         HTTPException: If the token is invalid or expired.
     """
-    old_email = None
-    user_with_token = user_crud.get_one(db, User.email_change_token == token)
-    if user_with_token:
-        old_email = user_with_token.email
- 
-    user = user_crud.confirm_email_change(db, token)
+    
+    user, old_email = user_crud.confirm_email_change(db, token)
  
     if not user:
         raise HTTPException(
