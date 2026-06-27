@@ -45,4 +45,5 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_additives_id'), table_name='additives')
     op.drop_index(op.f('ix_additives_e_number'), table_name='additives')
     op.drop_table('additives')
+    op.execute("DROP TYPE IF EXISTS additivestatus")
     # ### end Alembic commands ###

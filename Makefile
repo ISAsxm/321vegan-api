@@ -15,9 +15,9 @@ cmd-exists-%:
 install:  ## Build and run Docker Compose services, Downgrade alambic to base and upgrade to head
 	docker compose build --no-cache
 	docker compose up -d --force-recreate
-	docker exec -it 321veganapi poetry run alembic downgrade base 
-	docker exec -it 321veganapi poetry run alembic upgrade head 
-	docker exec -it 321veganapi poetry run python -m scripts.create_admin_user
+	docker exec 321veganapi poetry run alembic downgrade base
+	docker exec 321veganapi poetry run alembic upgrade head
+	docker exec 321veganapi poetry run python -m scripts.create_admin_user
 
 run: ## Build and run Docker Compose services
 	docker compose build
@@ -33,22 +33,23 @@ down:  ## Shutdown Docker Compose services
 	docker compose down
 
 initdb: ## Downgrade alambic to base and upgrade to head
-	docker exec -it 321veganapi poetry run alembic downgrade base && alembic upgrade head
+	docker exec 321veganapi poetry run alembic downgrade base
+	docker exec 321veganapi poetry run alembic upgrade head
 
 migration-create: ## Generate alambic new migration
-	docker exec -it 321veganapi poetry run alembic revision --autogenerate -m "new migration"
+	docker exec 321veganapi poetry run alembic revision --autogenerate -m "new migration"
 
 migration-apply: ## Apply alambic new migration
-	docker exec -it 321veganapi poetry run alembic upgrade head
+	docker exec 321veganapi poetry run alembic upgrade head
 
 migration-down: ## Downgrade alambic last applied migration
-	docker exec -it 321veganapi poetry run alembic downgrade -1
+	docker exec 321veganapi poetry run alembic downgrade -1
 
 migration-current: ## Show alambic last applied migration
-	docker exec -it 321veganapi poetry run alembic current
+	docker exec 321veganapi poetry run alembic current
 
 migration-history: ## Show alambic history
-	docker exec -it 321veganapi poetry run alembic history
+	docker exec 321veganapi poetry run alembic history
 
 create-admin: ## Create the admin user
-	docker exec -it 321veganapi poetry run python -m scripts.create_admin_user
+	docker exec 321veganapi poetry run python -m scripts.create_admin_user

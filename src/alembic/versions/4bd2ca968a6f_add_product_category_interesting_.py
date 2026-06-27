@@ -71,6 +71,7 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_interesting_products_id'), table_name='interesting_products')
     op.drop_index(op.f('ix_interesting_products_ean'), table_name='interesting_products')
     op.drop_table('interesting_products')
+    op.execute("DROP TYPE IF EXISTS interestingproducttype")
     op.drop_index(op.f('ix_product_categories_name'), table_name='product_categories')
     op.drop_index(op.f('ix_product_categories_id'), table_name='product_categories')
     op.drop_table('product_categories')
