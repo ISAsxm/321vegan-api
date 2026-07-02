@@ -319,7 +319,7 @@ class ShopCRUDRepository(CRUDRepository):
         - Decay is quadratic (n=2): slow at first, accelerating over time.
         - Penalty: each relevant not-found report subtracts up to 0.1,
           decaying linearly over 30 days.
-        - Bonus: each relevant found report adds up to 0.1,
+        - Bonus: each relevant found report adds up to 0.6,
           decaying linearly over 30 days (counteracts not-found penalties).
         - Floor: score never drops below 0.1 when no not-found reports exist.
         """
@@ -337,7 +337,7 @@ class ShopCRUDRepository(CRUDRepository):
         bonus = 0.0
         for date in found_dates:
             days_ago = (now - date).total_seconds() / 86400
-            bonus += 0.1 * max(0.0, 1.0 - days_ago / 30)
+            bonus += 0.6 * max(0.0, 1.0 - days_ago / 30)
 
         min_score = 0.0 if report_dates else 0.15
         return max(min_score, min(0.99, freshness - penalty + bonus))
