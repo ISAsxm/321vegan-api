@@ -19,6 +19,7 @@ class ErrorReportUpdate(BaseModel):
     comment: Optional[str] = Field(None, min_length=1)
     contact: Optional[str] = None
     handled: Optional[bool] = None
+    response: Optional[str] = None
 
 
 class ErrorReportInDB(ErrorReportBase):
@@ -35,6 +36,7 @@ class ErrorReportOut(BaseModel):
     comment: str
     contact: Optional[str] = None
     handled: bool
+    response: Optional[str] = None
     created_by: Optional[int] = None
     product: Optional[Product] = None
 

@@ -29,6 +29,7 @@ class User(Base):
     nb_products_modified = Column(Integer, default=0)
     supporter = Column(SmallInteger, default=0, nullable=False)
     subscription_bypass = Column(Boolean, default=False, nullable=False)
+    scan_count = Column(Integer, default=0, server_default="0", nullable=False)
     reset_token = Column(String, nullable=True)
     reset_token_expires = Column(DateTime, nullable=True)
     pending_email = Column(String, nullable=True)
@@ -53,6 +54,20 @@ class User(Base):
     def nb_checkings(self) -> int:
         """Return the number of checkings made by the user"""
         return len(self.checkings) if self.checkings else 0
+
+    @property
+    def nb_error_reports(self) -> int:
+        """Return the number of error reports made by the user"""
+        return len(self.error_reports) if self.error_reports else 0
+
+    @property
+    def subscription_status(self):
+        """Return the status of the user's latest subscription, or None"""
+        if not self.subscriptions:
+            return None
+        latest = max(self.subscriptions,
+                     key=lambda s: s.created_at or datetime.min)
+        return latest.status
 
     @property
     def roles(self) -> list:
