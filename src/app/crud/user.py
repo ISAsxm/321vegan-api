@@ -295,4 +295,29 @@ class UserCRUDRepository(CRUDRepository):
         db.refresh(user)
         return user.scan_count
 
+    def initialize_scan_count(self, db: Session, user_id: int, count: int) -> Optional[int]:
+        """
+        Seed the scan_count counter for a user from the app's local count.
+
+        Only applies if the counter is still 0 (fresh account), so an
+        already-established count cannot be overwritten.
+
+        Parameters:
+            db (Session): The database session.
+            user_id (int): The ID of the user.
+            count (int): The initial scan count from the app.
+
+        Returns:
+            Optional[int]: The resulting scan count, or None if the user was not found.
+        """
+        user = self.get_one(db, self._model.id == user_id)
+        if user is None:
+            return None
+        if not user.scan_count:
+            user.scan_count = count
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        return user.scan_count
+
 user_crud = UserCRUDRepository(model=User)

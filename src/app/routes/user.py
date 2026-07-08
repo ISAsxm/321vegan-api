@@ -12,7 +12,7 @@ from app.models import User
 from app.models.product import Product
 from app.models.error_report import ErrorReport
 from app.models.scan_event import ScanEvent
-from app.schemas.user import UserCreate, UserOutPaginated, UserOut, UserUpdate, UserFilters, UserUpdateOwn, UserPatch, ScanCountIncrement, ScanCountOut
+from app.schemas.user import UserCreate, UserOutPaginated, UserOut, UserUpdate, UserFilters, UserUpdateOwn, UserPatch, ScanCountIncrement, ScanCountInit, ScanCountOut
 from typing import Literal
 from app.security import get_password_hash
 
@@ -131,6 +131,37 @@ def increment_my_scan_count(
             detail="User not found",
         )
     return {"scan_count": new_count}
+
+
+@router.put("/me/scans", response_model=ScanCountOut, status_code=status.HTTP_200_OK)
+def initialize_my_scan_count(
+    payload: ScanCountInit,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> ScanCountOut:
+    """
+    Seed the current user's scan counter from the app's local count.
+
+    Called once after account creation/login so users who scanned before
+    having an account don't restart at zero. Only applies if the server
+    counter is still 0; otherwise the existing count is returned unchanged.
+
+    Parameters:
+        payload (ScanCountInit): The initial scan count.
+        db (Session): The database session.
+        current_user (User): The currently authenticated user.
+
+    Returns:
+        ScanCountOut: The current total scan count for the user.
+    """
+    scan_count = user_crud.initialize_scan_count(
+        db, current_user.id, payload.count)
+    if scan_count is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+    return {"scan_count": scan_count}
 
 
 @router.get("/{id}", response_model=UserOut, status_code=status.HTTP_200_OK, dependencies=[Depends(RoleChecker(["admin"]))])

@@ -110,6 +110,11 @@ class ScanCountIncrement(BaseModel):
     count: int = Field(default=1, ge=1, le=10000)
 
 
+class ScanCountInit(BaseModel):
+    """Schema for seeding the user's scan counter from the app's local count."""
+    count: int = Field(..., ge=0, le=1000000)
+
+
 class ScanCountOut(BaseModel):
     scan_count: int
 
