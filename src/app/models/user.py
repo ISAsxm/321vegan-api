@@ -61,6 +61,15 @@ class User(Base):
         return len(self.error_reports) if self.error_reports else 0
 
     @property
+    def subscription_status(self):
+        """Return the status of the user's latest subscription, or None"""
+        if not self.subscriptions:
+            return None
+        latest = max(self.subscriptions,
+                     key=lambda s: s.created_at or datetime.min)
+        return latest.status
+
+    @property
     def roles(self) -> list:
         roles = list(UserRole)
         index = roles.index(self.role)

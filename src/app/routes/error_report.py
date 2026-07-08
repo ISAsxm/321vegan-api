@@ -8,7 +8,6 @@ from app.routes.dependencies import get_current_active_user, get_current_active_
 from app.crud.error_reports import error_report_crud
 from app.database.db import get_db
 from app.log import get_logger
-from app.models import User
 from app.models.error_report import ErrorReport
 from app.schemas.error_report import ErrorReportCreate, ErrorReportOut, ErrorReportUpdate, ErrorReportOutPaginated, ErrorReportOutCount, ErrorReportFilters
 
@@ -106,49 +105,6 @@ def fetch_paginated_error_reports(
         order_by=sortby,
         descending=descending,
         **filter_params.model_dump(exclude_none=True)
-    )
-    pages = (total + size - 1) // size
-    return {
-        "items": error_reports,
-        "total": total,
-        "page": page,
-        "size": size,
-        "pages": pages
-    }
-
-
-@router.get(
-    "/me",
-    response_model=Optional[ErrorReportOutPaginated],
-    status_code=status.HTTP_200_OK,
-)
-def fetch_my_error_reports(
-    db: Session = Depends(get_db),
-    pagination_params: Tuple[int, int] = Depends(get_pagination_params),
-    orderby_params: Tuple[str, bool] = Depends(get_sort_by_params),
-    current_user: User = Depends(get_current_active_user),
-) -> Optional[ErrorReportOutPaginated]:
-    """
-    Fetch the error reports created by the current user.
-
-    Parameters:
-        db (Session): The database session.
-        pagination_params (Tuple[int, int]): The pagination parameters (skip, limit).
-        orderby_params (Tuple[str, bool]): The order by parameters (sortby, descending).
-        current_user (User): The currently authenticated user.
-
-    Returns:
-        Optional[ErrorReportOutPaginated]: The current user's error reports with pagination datas.
-    """
-    page, size = pagination_params
-    sortby, descending = orderby_params
-    error_reports, total = error_report_crud.get_many(
-        db,
-        skip=page,
-        limit=size,
-        order_by=sortby,
-        descending=descending,
-        created_by=current_user.id,
     )
     pages = (total + size - 1) // size
     return {

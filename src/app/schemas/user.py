@@ -48,6 +48,7 @@ class UserOut(UserBase):
     nb_error_reports: int = 0
     supporter: int = 0
     subscription_bypass: bool = False
+    subscription_status: Optional[str] = None
     scan_count: int = 0
     scanned_products: List[ScanSummaryItem] = []
 
