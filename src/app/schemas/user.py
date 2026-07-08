@@ -1,5 +1,5 @@
 from typing import List, Optional, TYPE_CHECKING
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from datetime import datetime, timezone
 from app.schemas.error_report import ErrorReportOut
 
@@ -42,9 +42,13 @@ class UserOut(UserBase):
     nb_products_sent: int = 0
     nb_products_modified: int = 0
     nb_checkings: int = 0
+    # Deprecated: kept for retrocompatibility, use nb_error_reports and
+    # GET /error-reports/me instead
     error_reports: List['ErrorReportOut'] = []
+    nb_error_reports: int = 0
     supporter: int = 0
     subscription_bypass: bool = False
+    scan_count: int = 0
     scanned_products: List[ScanSummaryItem] = []
 
     @field_validator('nb_products_sent', mode='before')
@@ -63,6 +67,12 @@ class UserOut(UserBase):
     @classmethod
     def validate_supporter(cls, v):
         """Convert None to 0 for supporter"""
+        return 0 if v is None else v
+
+    @field_validator('scan_count', mode='before')
+    @classmethod
+    def validate_scan_count(cls, v):
+        """Convert None to 0 for scan_count"""
         return 0 if v is None else v
 
     class Config:
@@ -91,6 +101,18 @@ class UserUpdateOwn(BaseModel):
     avatar: Optional[str] = None
     password: Optional[str] = None
     vegan_since: Optional[datetime] = None
+
+class ScanCountIncrement(BaseModel):
+    """Schema for incrementing the user's scan counter.
+
+    `count` allows batching scans made offline into a single request.
+    """
+    count: int = Field(default=1, ge=1, le=10000)
+
+
+class ScanCountOut(BaseModel):
+    scan_count: int
+
 
 class UserPatch(BaseModel):
     """Schema for partial user updates (PATCH requests)"""

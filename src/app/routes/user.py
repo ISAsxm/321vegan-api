@@ -12,7 +12,7 @@ from app.models import User
 from app.models.product import Product
 from app.models.error_report import ErrorReport
 from app.models.scan_event import ScanEvent
-from app.schemas.user import UserCreate, UserOutPaginated, UserOut, UserUpdate, UserFilters, UserUpdateOwn, UserPatch
+from app.schemas.user import UserCreate, UserOutPaginated, UserOut, UserUpdate, UserFilters, UserUpdateOwn, UserPatch, ScanCountIncrement, ScanCountOut
 from typing import Literal
 from app.security import get_password_hash
 
@@ -101,6 +101,36 @@ def fetch_leaderboard(
     db: Session = Depends(get_db),
 ):
     return user_crud.get_leaderboard(db, sortby=sortby, limit=limit)
+
+
+@router.post("/me/scans", response_model=ScanCountOut, status_code=status.HTTP_200_OK)
+def increment_my_scan_count(
+    payload: ScanCountIncrement = Body(default=ScanCountIncrement()),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> ScanCountOut:
+    """
+    Increment the current user's scan counter.
+
+    Called by the app on each product scan. `count` defaults to 1 and can
+    be greater to sync several scans made offline in a single request.
+
+    Parameters:
+        payload (ScanCountIncrement): The number of scans to add.
+        db (Session): The database session.
+        current_user (User): The currently authenticated user.
+
+    Returns:
+        ScanCountOut: The new total scan count for the user.
+    """
+    new_count = user_crud.increment_scan_count(
+        db, current_user.id, payload.count)
+    if new_count is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+    return {"scan_count": new_count}
 
 
 @router.get("/{id}", response_model=UserOut, status_code=status.HTTP_200_OK, dependencies=[Depends(RoleChecker(["admin"]))])

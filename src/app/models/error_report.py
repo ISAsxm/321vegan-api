@@ -15,6 +15,7 @@ class ErrorReport(Base):
     comment = Column(String, nullable=False)
     contact = Column(String, nullable=True)
     handled = Column(Boolean, default=False)
+    response = Column(String, nullable=True)
     created_by = Column(Integer, ForeignKey(
         "users.id"), nullable=True)
 

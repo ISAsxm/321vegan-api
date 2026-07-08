@@ -274,4 +274,25 @@ class UserCRUDRepository(CRUDRepository):
             db.commit()
             db.refresh(user)
 
+    def increment_scan_count(self, db: Session, user_id: int, count: int = 1) -> Optional[int]:
+        """
+        Increment the scan_count counter for a user.
+
+        Parameters:
+            db (Session): The database session.
+            user_id (int): The ID of the user.
+            count (int): How many scans to add (batched offline scans).
+
+        Returns:
+            Optional[int]: The new scan count, or None if the user was not found.
+        """
+        user = self.get_one(db, self._model.id == user_id)
+        if user is None:
+            return None
+        user.scan_count = (user.scan_count or 0) + count
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return user.scan_count
+
 user_crud = UserCRUDRepository(model=User)
