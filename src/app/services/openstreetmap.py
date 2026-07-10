@@ -10,9 +10,7 @@ class OpenStreetMapService:
     """Find nearby shops in OpenStreetMap data via the Geoapify Places API."""
 
     GEOAPIFY_API_URL = "https://api.geoapify.com/v2/places"
-    # Every shop type where vegan products get scanned: food shops (parent
-    # category covers bakery, greengrocer, organic/health food, frozen food,
-    # drinks...), plus outlets for cosmetics and household cleaners.
+    # Every shop type where products get scanned: food shops
     GEOAPIFY_CATEGORIES = ",".join([
         "commercial.supermarket",
         "commercial.convenience",
