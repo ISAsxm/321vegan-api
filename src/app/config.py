@@ -52,6 +52,9 @@ class Settings(BaseSettings):
     # Sentry
     SENTRY_DSN: str = ""
 
+    # Geoapify Places API (nearby shop lookup); lookup is skipped if empty
+    GEOAPIFY_API_KEY: str = ""
+
     # In-app purchase - Apple App Store
     APPLE_BUNDLE_ID: str = ""
     APPLE_ISSUER_ID: str = ""
