@@ -104,7 +104,7 @@ class OpenStreetMapService:
             "country": props.get("country"),
             "osm_id": str(osm_id) if osm_id is not None else None,
             "osm_type": osm_type_map.get(raw.get("osm_type"), raw.get("osm_type")),
-            # Pharmacies and marketplaces are tagged amenity=... in OSM, not shop=...
+            # Some are tagged amenity=... in OSM, not shop=... This handle the case
             "shop_type": raw.get("shop") or raw.get("amenity") or "supermarket",
         }
 
