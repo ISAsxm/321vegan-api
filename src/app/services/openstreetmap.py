@@ -73,11 +73,7 @@ class OpenStreetMapService:
     @staticmethod
     def _parse_geoapify_shop(feature: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Parse a Geoapify Places GeoJSON feature into our shop format.
-
-        Geoapify serves OSM data: the raw OSM id, type and tags are exposed
-        under properties.datasource.raw, which keeps osm_id compatible with
-        shops previously imported from Overpass.
+        Parse a Geoapify Places GeoJSON feature into shop format.
 
         Parameters:
             feature (Dict[str, Any]): A GeoJSON feature from Geoapify Places.
