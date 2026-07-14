@@ -114,6 +114,7 @@ def fetch_partner_category_by_id(
     status_code=status.HTTP_201_CREATED,
     response_model_exclude_none=True,
     response_model_exclude_unset=True,
+    dependencies=[Depends(RoleChecker(["admin"]))],
 )
 def create_partner_category(
     category_create: Annotated[
@@ -169,6 +170,7 @@ def create_partner_category(
     "/{id}",
     response_model=PartnerCategoryOut,
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(RoleChecker(["admin"]))],
 )
 def update_partner_category(
     id: int,
@@ -222,7 +224,7 @@ def update_partner_category(
     return category
 
 
-@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(RoleChecker(["admin"]))])
 def delete_partner_category(
     id: int,
     db: Session = Depends(get_db),

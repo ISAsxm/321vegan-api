@@ -21,13 +21,16 @@ router = APIRouter(dependencies=[Depends(get_current_active_user_or_client)])
 
 
 @router.get(
-    "/", response_model=List[Optional[ScanEventOut]], status_code=status.HTTP_200_OK
+    "/", response_model=List[Optional[ScanEventOut]], status_code=status.HTTP_200_OK,
+    dependencies=[Depends(RoleChecker(["admin"]))],
 )
 def fetch_all_scan_events(db: Session = Depends(get_db)) -> List[Optional[ScanEventOut]]:
     """
     Fetch all scan events.
 
     This function fetches all scan events from the database.
+
+    Admin only: scan events carry the user's identity and geolocation.
 
     Parameters:
         db (Session): The database session.
@@ -39,7 +42,8 @@ def fetch_all_scan_events(db: Session = Depends(get_db)) -> List[Optional[ScanEv
 
 
 @router.get(
-    "/search", response_model=Optional[ScanEventOutPaginated], status_code=status.HTTP_200_OK
+    "/search", response_model=Optional[ScanEventOutPaginated], status_code=status.HTTP_200_OK,
+    dependencies=[Depends(RoleChecker(["admin"]))],
 )
 def fetch_paginated_scan_events(
     filter_params: ScanEventFilters = Depends(),
@@ -81,7 +85,8 @@ def fetch_paginated_scan_events(
 
 
 @router.get(
-    "/by-ean/{ean}", response_model=List[Optional[ScanEventOut]], status_code=status.HTTP_200_OK
+    "/by-ean/{ean}", response_model=List[Optional[ScanEventOut]], status_code=status.HTTP_200_OK,
+    dependencies=[Depends(RoleChecker(["admin"]))],
 )
 def fetch_scan_events_by_ean(
     ean: str,
@@ -106,6 +111,7 @@ def fetch_scan_events_by_ean(
     "/{id}",
     response_model=Optional[ScanEventOut],
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(RoleChecker(["admin"]))],
 )
 def fetch_scan_event_by_id(
     id: int, db: Session = Depends(get_db)

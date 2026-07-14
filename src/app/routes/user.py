@@ -8,8 +8,9 @@ from app.routes.dependencies import get_current_superuser, get_pagination_params
 from app.crud import user_crud
 from app.database.db import get_db
 from app.log import get_logger
-from app.models import User
+from app.models import ApiClient, User
 from app.models.product import Product
+from app.models.user import UserRole
 from app.models.error_report import ErrorReport
 from app.models.scan_event import ScanEvent
 from app.schemas.user import UserCreate, UserOutPaginated, UserOut, UserUpdate, UserFilters, UserUpdateOwn, UserPatch, ScanCountIncrement, ScanCountInit, ScanCountOut
@@ -217,7 +218,7 @@ def fetch_user_by_email(email: str, db: Session = Depends(get_db)):
     return user
 
 
-@router.post("/", response_model=UserOut, status_code=status.HTTP_201_CREATED, dependencies=[Depends(get_admin_or_client)])
+@router.post("/", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 def create_user(
     user_create: Annotated[
         UserCreate,
@@ -236,13 +237,19 @@ def create_user(
         ),
     ],
     db: Session = Depends(get_db),
+    current_admin_or_client: User | ApiClient = Depends(get_admin_or_client),
 ):
     """
     Create a new user.
 
+    API clients (app registration) can only create regular users: the
+    role is forced to "user". Only admins can create users with another
+    role.
+
     Parameters:
         user_create (UserCreate): The user data to be created.
         db (Session): The database session.
+        current_admin_or_client (User | ApiClient): The current admin user or API client.
 
     Returns:
         User: The newly created user.
@@ -251,6 +258,8 @@ def create_user(
         HTTPException: If a user with the same email already exists in the system.
         HTTPException: If the user is not an admin or the request is not authenticated with a valid API key.
     """
+    if isinstance(current_admin_or_client, ApiClient):
+        user_create.role = UserRole.USER.value
     user = user_crud.get_user_by_email(db, email=user_create.email)
     if user is not None:
         raise HTTPException(
@@ -399,20 +408,28 @@ def update_user(
     return user
 
 
-@router.patch("/{id}", response_model=UserOut, status_code=status.HTTP_200_OK, dependencies=[Depends(get_admin_or_client)])
+CLIENT_PATCHABLE_USER_FIELDS = {"nickname", "vegan_since"}
+
+
+@router.patch("/{id}", response_model=UserOut, status_code=status.HTTP_200_OK)
 def patch_user(
     id: int,
     user_patch: UserPatch,
     db: Session = Depends(get_db),
+    current_admin_or_client: User | ApiClient = Depends(get_admin_or_client),
 ):
     """
     Partially update a user with the given ID.
     Only the provided fields will be updated, other fields remain unchanged.
 
+    API clients can only update the profile fields listed in
+    CLIENT_PATCHABLE_USER_FIELDS. Only admins can update any other field.
+
     Parameters:
         id (int): The ID of the user to update.
         user_patch (UserPatch): The fields to update (only provided fields will be updated).
         db (Session, optional): The database session. Defaults to Depends(get_db).
+        current_admin_or_client (User | ApiClient): The current admin user or API client.
 
     Returns:
         UserOut: The updated user information.
@@ -422,7 +439,17 @@ def patch_user(
         HTTPException: If there is an error updating the user.
         HTTPException: If the user does not have enough
             permissions to access to this endpoint.
+        HTTPException: 403 if an API client tries to update a restricted field.
     """
+    if isinstance(current_admin_or_client, ApiClient):
+        forbidden = set(user_patch.model_dump(exclude_unset=True)) - \
+            CLIENT_PATCHABLE_USER_FIELDS
+        if forbidden:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"API clients cannot update: {', '.join(sorted(forbidden))}",
+            )
+
     user = user_crud.get_one(db, User.id == id)
     if user is None:
         raise HTTPException(
