@@ -49,6 +49,10 @@ class User(Base):
         "ProductFoundReport", back_populates="user")
     subscriptions = relationship(
         "Subscription", back_populates="user")
+    b12_intakes = relationship(
+        "B12Intake", back_populates="user",
+        cascade="all, delete",
+        passive_deletes=True,)
 
     @property
     def nb_checkings(self) -> int:
