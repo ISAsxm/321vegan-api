@@ -1,15 +1,16 @@
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.routes.dependencies import get_current_active_user, get_pagination_params, get_sort_by_params
-from app.crud import user_crud
+from app.crud import user_crud, b12_intake_crud
 from app.crud.error_reports import error_report_crud
 from app.database.db import get_db
 from app.log import get_logger
 from app.models import User
+from app.schemas.b12_intake import B12IntakeOut
 from app.schemas.error_report import ErrorReportOutPaginated
 from app.schemas.user import UserOut, UserUpdateOwn
 from app.schemas.auth import EmailChangeRequest
@@ -144,6 +145,28 @@ def fetch_my_error_reports(
         "size": size,
         "pages": pages
     }
+
+
+@router.get(
+    "/b12-intakes",
+    response_model=List[B12IntakeOut],
+    status_code=status.HTTP_200_OK,
+)
+def fetch_my_b12_intakes(
+    db: Session = Depends(get_db),
+    active_user: User = Depends(get_current_active_user),
+) -> List[B12IntakeOut]:
+    """
+    Fetch the B12 intakes of the current user, most recent first.
+
+    Parameters:
+        db (Session): The database session.
+        active_user (User): The current active user.
+
+    Returns:
+        List[B12IntakeOut]: The current user's B12 intakes.
+    """
+    return b12_intake_crud.get_by_user(db, active_user.id)
 
 
 @router.patch("/email", status_code=status.HTTP_200_OK)

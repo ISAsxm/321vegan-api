@@ -115,6 +115,7 @@ def fetch_partner_by_id(
     status_code=status.HTTP_201_CREATED,
     response_model_exclude_none=True,
     response_model_exclude_unset=True,
+    dependencies=[Depends(RoleChecker(["admin"]))],
 )
 def create_partner(
     partner_create: Annotated[
@@ -177,6 +178,7 @@ def create_partner(
     "/{id}",
     response_model=PartnerOut,
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(RoleChecker(["admin"]))],
 )
 def update_partner(
     id: int,
@@ -230,7 +232,7 @@ def update_partner(
     return partner
 
 
-@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(RoleChecker(["admin"]))])
 def delete_partner(
     id: int,
     db: Session = Depends(get_db),
@@ -271,7 +273,7 @@ def delete_partner(
         ) from e
 
 
-@router.post("/{partner_id}/upload-logo", response_model=PartnerOut, status_code=status.HTTP_200_OK)
+@router.post("/{partner_id}/upload-logo", response_model=PartnerOut, status_code=status.HTTP_200_OK, dependencies=[Depends(RoleChecker(["admin"]))])
 def upload_partner_logo(
     *,
     db: Session = Depends(get_db),
@@ -316,7 +318,7 @@ def upload_partner_logo(
         ) from e
 
 
-@router.delete("/{partner_id}/logo", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{partner_id}/logo", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(RoleChecker(["admin"]))])
 def delete_partner_logo(
     *,
     db: Session = Depends(get_db),
