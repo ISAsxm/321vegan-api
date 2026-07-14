@@ -15,7 +15,7 @@ class B12IntakeBase(BaseModel):
 
 
 class B12IntakeCreate(B12IntakeBase):
-    pass
+    user_id: Optional[int] = None
 
 
 class B12IntakeInDB(B12IntakeBase):

@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.routes.dependencies import (
     get_admin_or_client,
+    get_current_active_user,
     get_current_active_user_or_client,
 )
 from app.crud import b12_intake_crud
@@ -32,30 +33,26 @@ def create_b12_intake(
                 {
                     "intake_date": "2026-07-13",
                     "frequency": "weekly",
-                    "user_id": 1,
                 }
             ]
         ),
     ],
     db: Session = Depends(get_db),
-    current_user_or_client: User | ApiClient = Depends(
-        get_current_active_user_or_client),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
-    Record a B12 intake for a user on a given day.
+    Record a B12 intake for the current user on a given day.
 
-    When called by a user, the intake is always recorded for that user,
-    regardless of the user_id in the body. API clients can record
-    intakes for any user.
-
+    The intake always belongs to the authenticated user: it is recorded
+    for the token's user, and the caller cannot record an intake for
+    somebody else. Requires a user token
     A user has at most one intake per day: recording the same day again
     returns 409 so clients can safely retry queued (offline) intakes.
 
     Parameters:
-        intake_create (B12IntakeCreate): The intake data (intake_date,
-            frequency, user_id).
+        intake_create (B12IntakeCreate): The intake data (intake_date, frequency).
         db (Session): The database session.
-        current_user_or_client (User | ApiClient): The current active user or API client.
+        current_user (User): The current active user the intake is recorded for.
 
     Returns:
         B12IntakeOut: The created intake.
@@ -64,8 +61,7 @@ def create_b12_intake(
         HTTPException: 409 if the intake is already recorded for that day.
         HTTPException: 400 if the user does not exist.
     """
-    if isinstance(current_user_or_client, User):
-        intake_create.user_id = current_user_or_client.id
+    intake_create.user_id = current_user.id
     try:
         intake = b12_intake_crud.create(db, intake_create)
     except IntegrityError as e:
